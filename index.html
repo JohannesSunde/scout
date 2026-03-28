@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1814">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Scout">
+<meta name="description" content="Field notes for photographers. Scout locations, track light conditions, plan your shoots.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.svg">
+<link rel="icon" type="image/png" href="icons/icon-192.svg">
+<title>Scout — Field Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    Scout <span>Field Notes</span>
+  </div>
+  <div class="header-right">
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="setView('map')" id="btn-map">Map</button>
+      <button class="view-btn" onclick="setView('list')" id="btn-list">List</button>
+    </div>
+    <button class="btn-primary" onclick="openAddForm()">
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+        <path d="M5.5 1v9M1 5.5h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      Add Location
+    </button>
+  </div>
+</header>
+
+<div class="app-body" id="app-body">
+  <!-- MAP -->
+  <div class="map-panel" id="map-panel">
+    <div class="map-canvas" id="map-canvas">
+      <svg class="map-terrain" viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="blur"><feGaussianBlur stdDeviation="8"/></filter>
+        </defs>
+        <ellipse cx="200" cy="180" rx="180" ry="120" fill="#c8a96a" opacity="0.12" filter="url(#blur)"/>
+        <ellipse cx="580" cy="300" rx="150" ry="100" fill="#8aaa88" opacity="0.15" filter="url(#blur)"/>
+        <ellipse cx="400" cy="420" rx="200" ry="80" fill="#6a9aaa" opacity="0.10" filter="url(#blur)"/>
+        <path d="M0 380 Q150 320 300 360 Q450 400 600 340 Q700 300 800 330 L800 600 L0 600Z" fill="#b0c8b0" opacity="0.08"/>
+        <path d="M100 200 Q250 280 400 260 Q550 240 700 300" stroke="#c8b890" stroke-width="2" fill="none" opacity="0.4"/>
+        <path d="M200 100 Q230 300 220 500" stroke="#c8b890" stroke-width="1.5" fill="none" opacity="0.3"/>
+        <path d="M0 400 Q400 380 800 420" stroke="#c8b890" stroke-width="1.5" fill="none" opacity="0.25"/>
+      </svg>
+
+      <div id="pins-container"></div>
+
+      <svg class="compass" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="30" cy="30" r="28" fill="none" stroke="#8a8278" stroke-width="0.5"/>
+        <circle cx="30" cy="30" r="22" fill="rgba(245,242,237,0.8)"/>
+        <polygon points="30,6 33,30 30,28 27,30" fill="#c0392b"/>
+        <polygon points="30,54 33,30 30,32 27,30" fill="#4a4540"/>
+        <text x="30" y="14" text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="#4a4540">N</text>
+        <text x="30" y="50" text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="#4a4540">S</text>
+        <text x="10" y="33" text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="#4a4540">W</text>
+        <text x="50" y="33" text-anchor="middle" font-family="DM Mono,monospace" font-size="7" fill="#4a4540">E</text>
+      </svg>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#c8902a"></div>Scouted</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2d5a3d"></div>Shot</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2c5f8a"></div>Revisit</div>
+      </div>
+
+      <div class="map-hint" id="map-hint">Click anywhere to add a location</div>
+    </div>
+
+    <div class="detail-panel" id="detail-panel">
+      <div class="detail-header">
+        <div class="detail-name" id="detail-name"></div>
+        <div class="detail-actions">
+          <button class="btn-icon" onclick="deleteSelected()" title="Delete location">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M2 3.5h10M5.5 3.5V2.5h3v1M6 6v4M8 6v4M3 3.5l.7 7.5h6.6l.7-7.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button class="detail-close" onclick="closeDetail()">×</button>
+        </div>
+      </div>
+      <div id="detail-body"></div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar" id="sidebar">
+    <div class="filter-bar">
+      <button class="filter-chip active" onclick="setFilter('all', this)">All <span class="count-badge" id="count-all">0</span></button>
+      <button class="filter-chip" onclick="setFilter('scouted', this)">Scouted</button>
+      <button class="filter-chip" onclick="setFilter('shot', this)">Shot</button>
+      <button class="filter-chip" onclick="setFilter('revisit', this)">Revisit</button>
+      <button class="filter-chip" onclick="setFilter('morning', this)">🌅 Morning</button>
+      <button class="filter-chip" onclick="setFilter('golden', this)">🌇 Golden</button>
+    </div>
+    <div class="location-list" id="location-list"></div>
+  </div>
+</div>
+
+<!-- ADD FORM OVERLAY -->
+<div class="add-form" id="add-form">
+  <div class="form-card">
+    <div class="form-title">
+      New Location
+      <button class="detail-close" onclick="closeAddForm()" style="font-size:22px">×</button>
+    </div>
+
+    <div class="form-group">
+      <label>Location Name</label>
+      <input type="text" id="f-name" placeholder="e.g. Old Lighthouse, Bygdøy">
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="f-desc" placeholder="What drew you here? Unique features, challenges…"></textarea>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Best Light</label>
+        <select id="f-time">
+          <option value="golden-morning">🌅 Golden Morning</option>
+          <option value="golden-evening">🌇 Golden Evening</option>
+          <option value="blue-hour">🌃 Blue Hour</option>
+          <option value="overcast">☁️ Overcast</option>
+          <option value="midday">☀️ Midday</option>
+          <option value="any">🕐 Any</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="f-status">
+          <option value="scouted">Scouted</option>
+          <option value="shot">Shot It</option>
+          <option value="revisit">Want to Revisit</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Light Direction (from where does the ideal light come?)</label>
+      <div class="direction-picker">
+        <button class="dir-btn" data-dir="N" onclick="selectDir(this)">↑ N</button>
+        <button class="dir-btn" data-dir="NE" onclick="selectDir(this)">↗ NE</button>
+        <button class="dir-btn" data-dir="E" onclick="selectDir(this)">→ E</button>
+        <button class="dir-btn" data-dir="SE" onclick="selectDir(this)">↘ SE</button>
+        <button class="dir-btn" data-dir="S" onclick="selectDir(this)">↓ S</button>
+        <button class="dir-btn" data-dir="SW" onclick="selectDir(this)">↙ SW</button>
+        <button class="dir-btn" data-dir="W" onclick="selectDir(this)">← W</button>
+        <button class="dir-btn" data-dir="NW" onclick="selectDir(this)">↖ NW</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Best Season</label>
+      <div class="season-picker">
+        <button class="season-btn" data-season="spring" onclick="toggleSeason(this)">🌱 Spring</button>
+        <button class="season-btn" data-season="summer" onclick="toggleSeason(this)">☀️ Summer</button>
+        <button class="season-btn" data-season="autumn" onclick="toggleSeason(this)">🍂 Autumn</button>
+        <button class="season-btn" data-season="winter" onclick="toggleSeason(this)">❄️ Winter</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Access Notes</label>
+      <input type="text" id="f-access" placeholder="Parking, permits, restrictions…">
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-secondary" onclick="closeAddForm()">Cancel</button>
+      <button class="btn-primary" onclick="saveLocation()">Save Location</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

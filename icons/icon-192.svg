@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <rect width="192" height="192" rx="40" fill="#1a1814"/>
+  <!-- Pin shape -->
+  <circle cx="96" cy="80" r="34" fill="none" stroke="#c8902a" stroke-width="8"/>
+  <circle cx="96" cy="80" r="14" fill="#c8902a"/>
+  <line x1="96" y1="110" x2="96" y2="148" stroke="#c8902a" stroke-width="8" stroke-linecap="round"/>
+  <!-- Horizon line -->
+  <line x1="40" y1="148" x2="152" y2="148" stroke="#f5f2ed" stroke-width="3" stroke-linecap="round" opacity="0.4"/>
+</svg>
